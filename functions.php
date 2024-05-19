@@ -2465,3 +2465,25 @@ add_filter('wp_handle_upload_prefilter', function($file){
 	$file['name'] = time().'-'.$file['name']; 
 	return $file; 
 });
+
+
+// Modify search query to exclude pages and categories(修改搜索查询以排除'页面'和'类别')
+function exclude_pages_and_categories_from_search($query) {
+    if (!is_admin() && $query->is_search) {
+        // Exclude pages
+        $query->set('post_type', array('post', 'idea', 'link')); // Include other post types but exclude 'page'
+        
+        // Exclude categories
+        $tax_query = array(
+            array(
+                'taxonomy' => 'category',
+                'field' => 'name',
+                'terms' => get_search_query(),
+                'operator' => 'NOT IN'
+            )
+        );
+        $query->set('tax_query', $tax_query);
+    }
+    return $query;
+}
+add_filter('pre_get_posts', 'exclude_pages_and_categories_from_search');
